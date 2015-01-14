@@ -35,9 +35,9 @@ The quickest method for installing the importer is:
 
 = Minimum Hosting Requirements =
 
-PHP memory limit of at least 256MB
-PHP execution time of at least 180 seconds
-PHP XML extension
+*PHP memory limit of at least 256MB
+*PHP execution time of at least 180 seconds
+*PHP XML extension
 
 If your host does not meet these minimum requirements, you should consider moving to dedicated or virtual dedicated hosting. Many discount or shared hosts do not meet these minimum requirements.
 
