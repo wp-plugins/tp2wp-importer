@@ -33,10 +33,18 @@ The quickest method for installing the importer is:
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Click on 'TP2WP Importer' menu which should appear near the bottom of the left sidebar.
 
+= Minimum Hosting Requirements =
+
+PHP memory limit of at least 256MB
+PHP execution time of at least 180 seconds
+PHP XML extension
+
+If your host does not meet these minimum requirements, you should consider moving to dedicated or virtual dedicated hosting. Many discount or shared hosts do not meet these minimum requirements.
+
 == Changelog ==
 
 = 1.0.0 =
-Initial release of new plugin. [ReadyMade WordPress Importer](https://wordpress.org/plugins/readymade-wordpress-importer-061/) should now be considered deprecated and superseded by this plugin.
+Initial release of new plugin. The [ReadyMade WordPress Importer](https://wordpress.org/plugins/readymade-wordpress-importer-061/) should now be considered deprecated and superseded by this plugin.
 
 = WordPress Importer =
 
