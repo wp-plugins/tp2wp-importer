@@ -22,7 +22,7 @@ The importer uses a three-step process to check your server, import your data, a
 
 These three steps combined with the file conversion process at [tp2wp.com](http://tp2wp.com) allow for as much data as possible to be moved from Typepad or MovableType blogs without manually reconstruction of data. Pages, sidebars, and other content outside of posts are not preserved as part of this process.
 
-NOTE: Our former plugin, the ReadyMadeWeb WordPress Importer, is superseded by this plugin and should now be considered deprecated.
+NOTE: The [ReadyMade WordPress Importer](https://wordpress.org/plugins/readymade-wordpress-importer-061/) should now be considered deprecated and superseded by this plugin.
 
 
 == Installation ==
@@ -36,17 +36,15 @@ The quickest method for installing the importer is:
 == Changelog ==
 
 = 1.0.0 =
-Initial release.
+Initial release of new plugin. [ReadyMade WordPress Importer](https://wordpress.org/plugins/readymade-wordpress-importer-061/) should now be considered deprecated and superseded by this plugin.
 
-= Branches & Former Versions =
+= WordPress Importer =
 
 Step 2 of our import process is a branch of the default WordPress importer. Our version modifies the default in three ways:
 
 1. If there is an attachment in the WXR and the importer is not able to determine the file type from the file name (ie missing extension), the patched version will make a light (body-less) request to the web server where the file is hosted for information we can use about the file. The things we're interested in are file type, size, and filename.
 2. If the importer is processing an attachment under the above situation, and it is able to determine the file type, then it will rewrite the local version of the file to have the appropriate file extension.
 3. When moving from one host to another, or from WordPress.com to a self-hosted site, you may setup hosting for your domain, let's call it "yourdomain.com" for example, before publicly directing the DNS to the new server. This is the correct thing to do if importing using WXR files. However, some hosts will then process references to "yourdomain.com" as internal references, rather than links to outside resources. This means that the importation process is essentially short circuited, with the public version of "yourdomain.com" being invisible to your new server. The ReadyMade WordPress Importer solves this problem by using TW2WP.com servers to identify the public IP of the source server and then uses that IP, rather than the domain, to import files.
-
-NOTE: Our former plugin, the ReadyMadeWeb WordPress Importer, is superseded by this plugin and should now be considered deprecated.
 
 == Frequently Asked Questions ==
 
