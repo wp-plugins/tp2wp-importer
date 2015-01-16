@@ -22,7 +22,7 @@ The importer uses a three-step process to check your server, import your data, a
 
 These three steps combined with the file conversion process at [tp2wp.com](http://tp2wp.com) allow for as much data as possible to be moved from Typepad or MovableType blogs without manually reconstruction of data. Pages, sidebars, and other content outside of posts are not preserved as part of this process.
 
-NOTE: The [ReadyMade WordPress Importer](https://wordpress.org/plugins/readymade-wordpress-importer-061/) should now be considered deprecated and superseded by this plugin.
+NOTE: The [ReadyMade WordPress Importer](https://wordpress.org/plugins/readymade-wordpress-importer-061/) is superseded by this plugin.
 
 
 == Installation ==
@@ -44,7 +44,7 @@ If your host does not meet these minimum requirements, you should consider movin
 == Changelog ==
 
 = 1.0.0 =
-Initial release of new plugin. The [ReadyMade WordPress Importer](https://wordpress.org/plugins/readymade-wordpress-importer-061/) should now be considered deprecated and superseded by this plugin.
+Initial release of new plugin. The [ReadyMade WordPress Importer](https://wordpress.org/plugins/readymade-wordpress-importer-061/) is superseded by this plugin.
 
 = WordPress Importer =
 
