@@ -92,6 +92,7 @@ function tp2wp_importer_status_is_theme_bundled () {
         'twentytwelve' => 'Twenty Twelve',
         'twentythirteen' => 'Twenty Thirteen',
         'twentyfourteen' => 'Twenty Fourteen',
+        'twentyfifteen' => 'Twenty Fifteen',
     );
 
     $theme = wp_get_theme();

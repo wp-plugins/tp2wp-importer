@@ -19,5 +19,6 @@ function tp2wp_importer_content_page_callback () {
 	exit;
 }
 
-if ( defined( 'WP_LOAD_IMPORTERS' ) )
-		include dirname( __FILE__ ) . '/importer.php';
+if ( defined( 'WP_LOAD_IMPORTERS' ) ) {
+	include dirname( __FILE__ ) . '/importer.php';
+}

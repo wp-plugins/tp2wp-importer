@@ -48,7 +48,7 @@
                         <p>
                             <?php echo __( 'Your PHP runtime is configured with a memory limit of '); ?>
                             <strong><?php echo $current_mem_limit; ?></strong>
-                            <?php echo __( 'which exceeds our minimum recommendation of' ); ?>
+                            <?php echo __( 'which meets or exceeds our minimum recommendation of' ); ?>
                             <strong><?php echo $ideal_mem_limit; ?></strong>.
                         </p>
                     </td>
@@ -60,7 +60,7 @@
                 <th scope="row">
                     <?php echo __( 'Maximum execution time' ); ?>
                 </th>
-                <?php if (!$current_max_execution_time): ?>
+                <?php if ( ! $current_max_execution_time): ?>
                     <td class="success result-cell">
                         <?php echo __( 'Pass' ); ?>
                     </td>
@@ -70,16 +70,18 @@
                         </p>
                     </td>
                 <?php elseif ( $current_max_execution_time < $ideal_max_execution_time ): ?>
-                    <td class="error result-cell">
-                        <?php echo __( 'Failure' ); ?>
+                    <td class="warning result-cell">
+                        <?php echo __( 'Warning' ); ?>
                     </td>
-                    <td class="error">
+                    <td class="warning">
                         <p>
                             <?php echo __( 'Your PHP runtime is configured to have a maximum execution time of' ); ?>
                             <strong><?php echo $current_max_execution_time; ?></strong> <?php echo __( 'seconds' ); ?>.
                             <?php echo __( 'We recommend increasing this limit to at least' ); ?>
                             <strong><?php echo $ideal_max_execution_time; ?></strong> <?php echo __( 'seconds' ); ?>.
                         </p>
+                        <p>
+                            <?php echo __( "When performing the import, we'll try to boost the maximum execution time and timeout limits for you, but some web hosts impose limits that this software cannot override.  For that reason it is best to manually set timeout values to something high if possible." ); ?>
                         <p>
                             <?php echo __( 'For more information on how to adjust your maximum execution time, please consult' ); ?>
                             <a href="http://php.net/manual/en/info.configuration.php#ini.max-execution-time">
@@ -96,7 +98,7 @@
                         <p>
                             <?php echo __( 'Your PHP runtime is configured with a maximum execution time of '); ?>
                             <strong><?php echo $current_max_execution_time; ?></strong> <?php echo __( 'seconds' ); ?>,
-                            <?php echo __( 'which exceeds our minimum recommendation of' ); ?>
+                            <?php echo __( 'which meets or exceeds our minimum recommendation of' ); ?>
                             <strong><?php echo $ideal_max_execution_time; ?></strong> <?php echo __( 'seconds' ); ?>.
                         </p>
                     </td>

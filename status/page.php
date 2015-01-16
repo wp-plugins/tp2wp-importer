@@ -35,7 +35,6 @@ function tp2wp_importer_status_page_callback () {
     $active_plugins = tp2wp_importer_status_active_plugins();
     $allowed_plugins = array(
         'tp2wp-importer/tp2wp-importer.php',
-        'readymade-wordpress-importer/wordpress-importer.php',
     );
     $bad_plugins = array_diff( $active_plugins, $allowed_plugins );
 
@@ -68,6 +67,6 @@ function tp2wp_importer_status_page_callback () {
         'bad_plugins' => $bad_plugins,
     );
 
-    $template_name = dirname( __FILE__) . '/templates/page.php';
+    $template_name = dirname( __FILE__ ) . '/templates/page.php';
     echo tp2wp_importer_process_template( $template_name, $variables );
 }

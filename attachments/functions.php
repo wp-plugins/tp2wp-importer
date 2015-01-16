@@ -104,9 +104,9 @@ function tp2wp_importer_attachments_import_for_post ($post_id) {
         add_post_meta( $attachment_id, TP2WP_IMPORTER_ATTACHMENTS_SETTINGS_META_TAG, time() );
 
 
-        // Note that we successfully imported this attachment.  Note that
-        // we haven't yet changed the text of the post, which we'll do
-        // after we've finished importing all of the attachments.
+        // At this point we have successfully fetched this attachment.
+        // Note that we haven't yet changed the text of the post, which we'll
+        // do after we've finished importing all of the attachments.
         $work_performed[$url] = array( true, $local_url );
     }
 
@@ -671,5 +671,4 @@ function tp2wp_importer_attachments_reset () {
     $wpdb->query( $delete_query );
 
     return $num_posts;
-
 }

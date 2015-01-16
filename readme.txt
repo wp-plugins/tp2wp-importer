@@ -1,10 +1,10 @@
 === TP2WP Importer ===
-Contributors: ReadyMadeWeb
+Contributors: ReadyMadeWeb, Peter Snyder
 Donate link: http://tp2wp.com
 Tags: importer, wordpress, typepad, movabletype, attachments, import, uploads, transfer
 Requires at least: 3.0
 Tested up to: 4.1
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,9 @@ The quickest method for installing the importer is:
 If your host does not meet these minimum requirements, you should consider moving to dedicated or virtual dedicated hosting. Many discount or shared hosts do not meet these minimum requirements.
 
 == Changelog ==
+
+= 1.0.1 =
+Updates to Status Check portion of the plugin.
 
 = 1.0.0 =
 Initial release of new plugin. The [ReadyMade WordPress Importer](https://wordpress.org/plugins/readymade-wordpress-importer-061/) is superseded by this plugin.
