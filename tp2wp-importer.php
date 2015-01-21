@@ -1,12 +1,12 @@
 <?php
 
 /*
-Plugin Name: Typepad2Wordpress Importer
+Plugin Name: TP2WP Importer
 Plugin URI: https://tp2wp.com
-Description: Collection of functionality to ease importing Typepad data into wordpress
+Description: Collection of functionality to ease importing Typepad data into Wordpress.
 Author: Peter Snyder, ReadyMadeWeb
 Author URI: https://tp2wp.com
-Version: 1.0.2
+Version: 1.0.3
 Text Domain: tp2wp-importer
 License: GPL version 2 or later - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
