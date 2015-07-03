@@ -6,7 +6,7 @@ Plugin URI: https://tp2wp.com
 Description: Collection of functionality to ease importing Typepad data into Wordpress.
 Author: Peter Snyder, ReadyMadeWeb
 Author URI: https://tp2wp.com
-Version: 1.0.3
+Version: 1.0.9
 Text Domain: tp2wp-importer
 License: GPL version 2 or later - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
@@ -44,6 +44,7 @@ function tp2wp_importer_admin_init () {
     );
 }
 
+
 if ( is_admin() ) {
     add_action( 'admin_init', 'tp2wp_importer_admin_init', 0 );
     add_action( 'admin_menu', 'tp2wp_importer_admin_menu' );
@@ -54,21 +55,21 @@ if ( is_admin() ) {
 // ==========
 
 function tp2wp_importer_url ($step) {
-  $admin_url = get_admin_url();
-  $urls = array(
-    'status' => $admin_url . 'admin.php?page=tp2wp-importer',
-    'content' => $admin_url . 'admin.php?import=tp2wp',
-    'attachments' => $admin_url . 'admin.php?page=tp2wp-importer-attachments',
-  );
-  return $urls[$step];
+    $admin_url = get_admin_url();
+    $urls = array(
+        'status' => $admin_url . 'admin.php?page=tp2wp-importer',
+        'content' => $admin_url . 'admin.php?import=tp2wp',
+        'attachments' => $admin_url . 'admin.php?page=tp2wp-importer-attachments',
+    );
+    return $urls[$step];
 }
 
 function tp2wp_importer_tabs ($step = 'status') {
-  $template = dirname( __FILE__ ) . '/general/templates/tabs.php';
-  $params = array(
-    'step' => $step,
-  );
-  return tp2wp_importer_process_template( $template, $params );
+    $template = dirname( __FILE__ ) . '/general/templates/tabs.php';
+    $params = array(
+        'step' => $step,
+    );
+    return tp2wp_importer_process_template( $template, $params );
 }
 
 /**

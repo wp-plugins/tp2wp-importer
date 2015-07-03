@@ -52,6 +52,22 @@ function tp2wp_importer_attachments_import_for_post ($post_id) {
         return array( false, 'Loaded post is of type "' . $post->post_type . '", not "post".' );
     }
 
+    // Check to see if we support symlinks on the current system.  If we do,
+    // we will create a symlink from a predictable path
+    // (/wp-content/uploads/tp2wp-migration/<hash>) to the standard wordpress
+    // path (/wp-content/uploads/<year>/<month>/<hash>.<extension>).
+    // Otherwise, we'll just copy the file to both locations.
+    tp2wp_importer_load_functions( 'status' );
+    $should_create_links = tp2wp_importer_status_alt_upload_location_correct();
+    if ( $should_create_links ) {
+        $supports_symlinks = tp2wp_importer_status_supports_symlinks();
+        $alt_upload_path = tp2wp_importer_attachments_alt_upload_path();
+        $alt_version_func = $supports_symlinks ? 'symlink' : 'copy';
+        $upload_dir_info = wp_upload_dir();
+        $root_upload_dir = $upload_dir_info['basedir'];
+        $root_upload_dir_length = strlen( $root_upload_dir );
+    }
+
     $options = get_option( TP2WP_IMPORTER_ATTACHMENTS_SETTINGS_OPTIONS_GROUP, null );
     $domains = $options ? $options['domains'] : array();
 
@@ -103,6 +119,30 @@ function tp2wp_importer_attachments_import_for_post ($post_id) {
 
         add_post_meta( $attachment_id, TP2WP_IMPORTER_ATTACHMENTS_SETTINGS_META_TAG, time() );
 
+        // If the attachment import was successful, and we have a valid
+        // alternate upload directory, then also create a second reference
+        // to the imported file so that we can redirect to it.
+        if ( $should_create_links ) {
+
+            $imported_file_path_info = pathinfo( $local_path );
+            $imported_file_basename = $imported_file_path_info['basename'];
+            // This stores the name of the file w/o the extension
+            $imported_file_filename = $imported_file_path_info['filename'];
+
+            // We want this path to be relative, so that it can be moved
+            // between installs and still be correct (ie not be dependent
+            // on the absolute path of the file).  The above relative path
+            // directs from a path like
+            // wp-content/uploads/<YEAR>/<MONTH>/<HASH>.<EXT> ->
+            // wp-content/uploads/tp2wp-migrated/<HASH>
+            $relative_path = substr($imported_file_path_info['dirname'], $root_upload_dir_length);
+            $relative_path_to_upload = '..' . $relative_path . '/' . $imported_file_basename;
+
+            // Will be either 'symlink' or 'copy', depending on what the
+            // local filesystem / OS supports.
+            $second_version_path = $alt_upload_path . DIRECTORY_SEPARATOR . $imported_file_filename;
+            $alt_version_func( $relative_path_to_upload, $second_version_path );
+        }
 
         // At this point we have successfully fetched this attachment.
         // Note that we haven't yet changed the text of the post, which we'll
@@ -234,7 +274,6 @@ function tp2wp_importer_attachments_remote_file_info ($url) {
     if ( isset( $cache[$url] ) ) {
         return $cache[$url];
     }
-
 
     $mime = null;
     $filename = null;
@@ -382,13 +421,6 @@ function tp2wp_importer_attachments_import_attachment ($url, $date = null) {
 
     $local_filename = tp2wp_importer_attachments_generate_local_filename( $url );
 
-    // Now check to see if we were able to stub out the file correctly.  If not,
-    // something bad happened that we're not going to be able to fix,
-    // so return fast.
-    if ( $stub_info['error'] ) {
-        return array( false, $stub_info['error'] );
-    }
-
     $response = wp_remote_get( $url, array( 'timeout' => 30 ) );
     $request_body = wp_remote_retrieve_body( $response );
     $request_code = wp_remote_retrieve_response_code( $response );
@@ -411,7 +443,7 @@ function tp2wp_importer_attachments_import_attachment ($url, $date = null) {
         return array( false, $error_msg );
     }
 
-    $file = wp_upload_bits( $local_filename, 0, $request_body, date( 'Y/m', $date ) );
+    $file = wp_upload_bits( $local_filename, null, $request_body, date( 'Y/m', $date ) );
     $fetched_file_path = $file['file'];
     $fetched_file_url = $file['url'];
 
@@ -494,6 +526,49 @@ function tp2wp_importer_attachments_generate_local_filename ($url) {
 
     return $filename;
 }
+
+
+/**
+ * Returns the path used to link / copy each imported attachment, so that
+ * we can redirect all references to the old Typepad path
+ * (ex /.a/<hash>) to a new location in Wordpress
+ * (ex /wp-content/uploads/tp2wp-migrated/<hash>).
+ *
+ * @return string
+ *   The absolute path to the alternate / second directory used for
+ *   uploaded files.
+ */
+function tp2wp_importer_attachments_alt_upload_path () {
+
+    $upload_dir_info = wp_upload_dir();
+    $alt_location = $upload_dir_info['basedir'] . DIRECTORY_SEPARATOR . TP2WP_IMPORTER_ATTACHMENTS_ALT_DIR_NAME;
+    return $alt_location;
+}
+
+
+/**
+ * Returns a string representation of the path part of a URL where
+ * alternate version of each file is stored.  This is used, for example, when
+ * doing 301 redirects.
+ *
+ * @return string|NULL
+ *   If the directory exists, a string version of the base part of the path.
+ *   Or, if the directory does not exist, NULL.
+ */
+function tp2wp_importer_attachments_alt_upload_url () {
+
+    // First check and make sure the directory exists.  For the purposes
+    // of this check, we don't care if its writeable, only that it
+    // exists.
+    $alt_upload_dir_path = tp2wp_importer_attachments_alt_upload_path();
+    if ( ! is_dir( $alt_upload_dir_path ) ) {
+        return NULL;
+    }
+
+    $upload_dir_info = wp_upload_dir();
+    return $upload_dir_info['baseurl'] . '/' . TP2WP_IMPORTER_ATTACHMENTS_ALT_DIR_NAME;
+}
+
 
 /**
  * Simple callback for sorting strings by string length.
@@ -601,13 +676,13 @@ function tp2wp_importer_attachments_post_ids_to_process ($min = null, $max = nul
     global $wpdb;
     $processed_posts_query = "
         SELECT
-            p.ID AS ID
+            p2.ID AS ID
         FROM
-            {$wpdb->posts} AS p
+            {$wpdb->posts} AS p2
         LEFT JOIN
-            {$wpdb->postmeta} AS pm ON (p.ID = pm.post_id)
+            {$wpdb->postmeta} AS pm ON (p2.ID = pm.post_id)
         WHERE
-            p.post_type = 'post' AND
+            p2.post_type = 'post' AND
             pm.meta_key = '" . TP2WP_IMPORTER_ATTACHMENTS_SETTINGS_META_TAG . "'
     ";
 
@@ -630,13 +705,8 @@ function tp2wp_importer_attachments_post_ids_to_process ($min = null, $max = nul
         $all_posts_query .= ' AND p.ID <= ' . $max;
     }
 
-    $processed_post_ids = $wpdb->get_col( $processed_posts_query );
-    $all_post_ids = $wpdb->get_col( $all_posts_query );
-
-    $to_process_ids = array_diff( $all_post_ids, $processed_post_ids );
-    $post_ids = array_values( $to_process_ids );
-    sort( $post_ids );
-    return $post_ids;
+    $combined_query = $all_posts_query . ' AND p.ID NOT IN (' . $processed_posts_query . ') ORDER BY p.ID';
+    return $wpdb->get_col( $combined_query );
 }
 
 /**
