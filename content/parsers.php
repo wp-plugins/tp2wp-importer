@@ -11,6 +11,44 @@
  */
 class WXR_Parser {
 	function parse( $file ) {
+
+    // We check and see if the uploaded file is zipped by process of
+    // eliminiation (ie trying to open as a zip file, then a bz2 compressed
+    // file.
+	  $temp_path = tempnam( sys_get_temp_dir(), 'tp2wp-unpacked.wxr' );
+    $is_zip = $is_bzip = false;
+
+    if ( function_exists( 'zip_open ' ) ) {
+      // First check and see if this could be a zipped file
+		  $zip = zip_open( $file );
+
+		  if ( is_resource( $zip ) ) {
+		  	$entry = zip_read( $zip );
+		  	if ( zip_entry_open( $zip, $entry, "r" ) ) {
+		  		$content = NULL;
+		  		while ( ( $content = zip_entry_read( $entry ) ) != false ) {
+		  			file_put_contents( $temp_path, $content, FILE_APPEND );
+		  		}
+          $file = $temp_path;
+          $is_zip = true;
+		  	}
+		  }
+	  }	
+
+    if ( ! $is_zip && function_exists( 'bzopen' ) ) {
+      $bz = bzopen( $file, "r" );
+      if ( $bz !== false ) {
+        $content = null;
+        while ( ( $content = bzread( $bz ) ) != false ) {
+          $is_bzip = true;
+          file_put_contents( $temp_path, $content, FILE_APPEND );
+        }
+        if ( $is_bzip ) {
+          $file = $temp_path;
+        }
+      }
+    }
+
 		// Attempt to use proper XML parsers first
 		if ( extension_loaded( 'simplexml' ) ) {
 			$parser = new WXR_Parser_SimpleXML;
@@ -56,7 +94,7 @@ class WXR_Parser_SimpleXML {
 	function parse( $file ) {
 		$authors = $posts = $categories = $tags = $terms = array();
 
-		$internal_errors = libxml_use_internal_errors(true);
+		$internal_errors = libxml_use_internal_errors( true );
 		$xml = simplexml_load_file( $file );
 		// halt if loading produces an error
 		if ( ! $xml )
@@ -383,10 +421,6 @@ class WXR_Parser_Regex {
 	var $tags = array();
 	var $terms = array();
 	var $base_url = '';
-
-	function WXR_Parser_Regex() {
-		$this->__construct();
-	}
 
 	function __construct() {
 		$this->has_gzip = is_callable( 'gzopen' );

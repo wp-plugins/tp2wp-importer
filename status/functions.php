@@ -42,6 +42,74 @@ function tp2wp_importer_status_max_execution_time () {
     return tp2wp_importer_status_time_config_value( 'max_execution_time' );
 }
 
+
+/**
+ * Returns a boolean description of whether the current file system supports
+ * symlinks.
+ *
+ * @return bool
+ *   TRUE if the current system supports symlinks, and false in all other
+ *   cases.
+ */
+function tp2wp_importer_status_supports_symlinks () {
+
+    // We test to see if the current system supports symlinks by creating
+    // a temp file, and attemping to symlink it to another temp file.
+    $temp_dir = sys_get_temp_dir();
+    $temp_file_path = tempnam( $temp_dir, 'tp2wp-test-file' );
+
+    // If creating the file failed for whatever reason, we know our test for
+    // symlink support will fail too, so eary quit
+    if ( $temp_file_path === false ) {
+        return false;
+    }
+
+    // Otherwise, attempt to symlink our newly created test file to a new temp
+    // file.
+    $symlink_test_path = $temp_dir . DIRECTORY_SEPARATOR . 'tp2wp-test-symlink';
+    $test_result = symlink( $temp_file_path, $symlink_test_path );
+
+    // Finally clean everything up, and return whether we were able to
+    // successfully create a symlink.
+    unlink( $temp_file_path );
+    unlink( $symlink_test_path );
+
+    return $test_result;
+}
+
+
+/**
+ * Returns a boolean description of whether there is a writeable path on
+ * the system we can use to link / copy all uploads to, so that we can
+ * determistically redirect all references to the old Typepad path
+ * (ex /.a/<hash>) to a new location in Wordpress
+ * (ex /wp-content/uploads/tp2wp-migration/<hash>).
+ *
+ * This is needed since by default Wordpress uploads files to paths like
+ * (ex /wp-content/uploads/<year>/<month>/<hash>.<ext>), which isn't
+ * regex rewriteable from a Typepad file path.
+ *
+ * If the upload directory does not exist, this function attempts to
+ * create it.
+ *
+ * @return boolean
+ *   `true` if the directory exists once this function has returned and is
+ *   writeable.  `false` in all other cases (doesn't exist, not writeable, etc)
+ */
+function tp2wp_importer_status_alt_upload_location_correct () {
+
+    tp2wp_importer_load_functions( 'attachments' );
+    $upload_path = tp2wp_importer_attachments_alt_upload_path();
+    $dir_exists = is_dir( $upload_path );
+
+    if ( ! $dir_exists ) {
+        $dir_exists = wp_mkdir_p( $upload_path );
+    }
+
+    return $dir_exists AND is_writable( $upload_path );
+}
+
+
 /**
  * Returns a configuration value set in PHP as a count of seconds.
  *
@@ -126,6 +194,7 @@ function tp2wp_importer_status_bytes_to_human ($size) {
 
     return number_format( $size ) . " bytes";
 }
+
 
 /**
  * Normalizes the representation of a configuration value, so

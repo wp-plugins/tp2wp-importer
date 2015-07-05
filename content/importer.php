@@ -524,7 +524,7 @@ class TP2WP_Import extends WP_Importer {
 
 			$post_type_object = get_post_type_object( $post['post_type'] );
 
-			$post_exists = post_exists( $post['post_title'], '', $post['post_date'] );
+			$post_exists = tp2wp_importer_content_post_exists( $post['post_name'] );
 			if ( $post_exists && get_post_type( $post_exists ) == $post['post_type'] ) {
 				printf( __('%s &#8220;%s&#8221; already exists.', 'tp2wp-importer'), $post_type_object->labels->singular_name, esc_html($post['post_title']) );
 				echo '<br />';
@@ -912,6 +912,12 @@ class TP2WP_Import extends WP_Importer {
 			echo '<p>'.__( 'Your system also supports uploading a compressed (zip) version of the TP2WP converted file. This is the version of the file you received directly from TP2WP.com', 'tp2wp-importer' ).'</p>';
 		}
 
+    // Similarly, if the bzip module is in place, add that the user can
+    // upload bziped versions of the file as well.
+    if ( function_exists( 'bzopen' ) ) {
+			echo '<p>' . __( 'Your system also supports uploading a compressed (bz2) version of the TP2WP converted file. This is the version of the file you received directly from TP2WP.com', 'tp2wp-importer' ) . '</p>';
+    }
+
 		wp_import_upload_form( 'admin.php?import=tp2wp&amp;step=1' );
 		echo '</div>';
 	}
@@ -954,7 +960,7 @@ class TP2WP_Import extends WP_Importer {
 	 * Added to http_request_timeout filter to force timeout at 60 seconds during import
 	 * @return int 60
 	 */
-	function bump_request_timeout() {
+	function bump_request_timeout($var) {
 		return 60;
 	}
 

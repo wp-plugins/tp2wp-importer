@@ -136,6 +136,112 @@
                 <?php endif; ?>
             </tr>
 
+            <?php // Check to see if we are able to create and write to a directory to handle
+                  // the alternate location for uploaded files. ?>
+            <tr>
+                <th scope="row">
+                    <?php echo __( 'Alternate Upload Directory' ); ?>
+                </th>
+                <?php if ( ! $upload_directory_is_writeable ): ?>
+                    <td class="warning result-cell">
+                        <?php echo __( 'Warning' ); ?>
+                    </td>
+                    <td class="warning">
+                        <p>
+                            <?php echo __( 'We were unable to create an alternate upload directory at ' ); ?>
+                            <em><?php echo $upload_directory_path; ?></em>.
+                            <?php echo __( 'This directory is used to store an alternate reference to each imported attachment or file, so that we can redirect requests coming from other sites linking to your files.' ); ?>
+                        </p>
+                        <p>
+                            <?php echo __( 'To enable this second location to migrate your files, to, please change the permissions on your file system so that this directory can be created and written to. '); ?>
+                        </p>
+                    </td>
+                <?php else: ?>
+                  <td class="success result-cell">
+                      <?php echo __( 'Pass' ); ?>
+                  </td>
+                    <td class="success">
+                        <p>
+                            <?php echo __( 'The directory' ); ?>
+                            <em><?php echo $upload_directory_path; ?></em>
+                            <?php echo __( 'exists and can be written to.' ); ?>
+                        </p>
+                    </td>
+                <?php endif; ?>
+            </tr>
+
+
+            <?php // Check to see if the current file system supports symlinks ?>
+            <tr>
+                <th scope="row">
+                    <?php echo __( 'Symlink support' ); ?>
+                </th>
+                <?php if ( ! $supports_symlinks ): ?>
+                    <td class="warning result-cell">
+                        <?php echo __( 'Warning' ); ?>
+                    </td>
+                    <td class="warning">
+                        <p>
+                            <?php echo __( 'Your site is running on a system that does not support' ); ?>
+                            <a href="https://en.wikipedia.org/wiki/Symbolic_link"><?php echo __( 'symlinks' ); ?></a>.
+                            <?php echo __( 'Usually this is because you are running on a version of Windows earlier than Vista.' ); ?>
+                        </p>
+                        <p>
+                            <?php echo __( 'This will not impact the abilit of your files and attachments to be imported, but requires twice as much space to store the files, once in the standard Wordpress location, and once in a predicatable location so that references to the old Typepad location of the file can be redirected to the new location).' ); ?>
+                        </p>
+                    </td>
+                <?php else: ?>
+                    <td class="success result-cell">
+                        <?php echo __( 'Pass' ); ?>
+                    </td>
+                    <td class="success">
+                        <p>
+                            <?php echo __( 'Your system supports' ); ?>
+                            <a href="https://en.wikipedia.org/wiki/Symbolic_link"><?php echo __( 'symlinks' ); ?></a>,
+                            <?php echo __( 'allowing us to have each imported attachment reside at two different paths, and reducing the amount of disk space required to store your files at both their previous Typepad paths and the new Wordpress supported paths.' ); ?>
+                        </p>
+                    </td>
+                <?php endif; ?>
+            </tr>
+
+            <?php // Check to see if we have mod_rewrite or something similar
+                  // installed, so that we can do Typepad attachment redirection
+                  // in the plugin, instead of in mod_rewrite (or wherever else) ?>
+            <tr>
+                <th scope="row">
+                    <?php echo __( '"Pretty" URLs' ); ?>
+                </th>
+                <?php if ( ! $supports_url_rewrite ): ?>
+                    <td class="warning result-cell">
+                        <?php echo __( 'Warning' ); ?>
+                    </td>
+                    <td class="warning">
+                        <p>
+                            <?php echo __( 'Your server does not support, or have enabled, any of Wordpress\'s methods for generating' ); ?>
+                            <a href="https://codex.wordpress.org/Using_Permalinks">"Pretty Permalinks"</a>.
+                            <?php echo __( 'As a result, when other websites request attachments and images at their old Typepad URLs, we cannot redirect them to the new URLs where those attachments reside in your Wordpress install.' ); ?>
+                        </p>
+                        <p>
+                            <?php echo __( 'Please enable any of Wordpress\'s "Pretty Permalink" methods on your system.  If this is not possible, you can add the below <em>mod_rewrite</em> rule to your site\'s .htaccess file.  If you are not using the Apache webserver, you will need to consult your server\'s documentation for the equivilent rule.' ); ?>
+                        <p>
+                        <textarea readonly="readonly" rows="4" style="width: 100%">&lt;IfModule mod_rewrite.c&gt;
+RewriteEngine On
+RewriteRule ^\.a/(.*)$ /wp-content/uploads/tp2wp-migrated/$1 - [L,R=301]
+&lt;/IfModule&gt;</textarea>
+                    </td>
+                <?php else: ?>
+                    <td class="success result-cell">
+                        <?php echo __( 'Success' ); ?>
+                    </td>
+                    <td class="success">
+                        <p>
+                            <?php echo __( 'Your server supports and is using "Pretty Permalinks".  As a result, we can redirect third party sites that are linking to your attachments to the correct new location for those attachments.' ); ?>
+                        </p>
+                    </td>
+                <?php endif; ?>
+            </tr>
+
+
             <?php // Check to make sure that the permalink structure is configured correctly ?>
             <tr>
                 <th scope="row">
@@ -166,10 +272,10 @@
                         </p>
                     </td>
                 <?php elseif ( $ideal_permalink_structure !== $current_permalink_structure ): ?>
-                    <td class="error result-cell">
+                    <td class="warning result-cell">
                         <?php echo __( 'Warning' ); ?>
                     </td>
-                    <td class="error">
+                    <td class="warning">
                         <p>
                             <?php echo __( 'Permalinks for your posts are currently configured to be' ); ?>
                             <strong><?php echo $current_permalink_structure; ?></strong>,
@@ -188,7 +294,7 @@
                             <?php echo __( 'page.' ); ?>
                         </p>
                         <p>
-                           <p>
+                            <p>
                                 <?php echo __( 'Note though that if you changed the pattern for URLs in your Typepad or Moveable type data from their default, you may need to change the recommended value to something more appropriate for your content.' ); ?>
                             </p>
                         </p>

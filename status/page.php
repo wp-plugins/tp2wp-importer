@@ -63,8 +63,14 @@ function tp2wp_importer_status_page_callback () {
         'current_permalink_structure' => $current_permalink_structure,
 
         'is_default_theme' => tp2wp_importer_status_is_theme_bundled(),
-        'xml_extension_installed' => tp2wp_importer_status_xml_extension_exists(),
         'bad_plugins' => $bad_plugins,
+        'xml_extension_installed' => tp2wp_importer_status_xml_extension_exists(),
+
+        'supports_symlinks' => tp2wp_importer_status_supports_symlinks(),
+        'upload_directory_is_writeable' => tp2wp_importer_status_alt_upload_location_correct(),
+        'upload_directory_path' => tp2wp_importer_attachments_alt_upload_path(),
+
+        'supports_url_rewrite' => got_url_rewrite(),
     );
 
     $template_name = dirname( __FILE__ ) . '/templates/page.php';
