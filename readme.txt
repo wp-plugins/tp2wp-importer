@@ -43,6 +43,14 @@ If your host does not meet these minimum requirements, you should consider movin
 
 == Changelog ==
 
+= 1.0.10 =
+  * Handle rewriting links to popup versions of images within the plugin
+    (previously was only handled in the [coversion](https://convert.tp2wp.com/)
+    process.
+  * Remove some redundant checking on remote mimetypes, for some quicker
+    imports.
+  * Small, code-style cleanups
+
 = 1.0.9 =
 
 * Handle much larger data sets by doing some array operations in the database instead of in PHP.  Specifically, find out which posts still need to be imported by using a nested query instead of to different queries and an array_diff, which hits memory limits much quicker.
