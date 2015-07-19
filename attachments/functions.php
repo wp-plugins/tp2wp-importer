@@ -85,14 +85,41 @@ function tp2wp_importer_attachments_import_for_post ($post_id) {
 
     foreach ( $attachments as $url ) {
 
-        // First check and see if the extracted attachment looks like a file
+        // There are some cases where we want to modify the URL as we're
+        // processing it, so want to have a copy of the original url
+        // before processing, so that we are sure to rewrite all references
+        // in the body and the excerpt.
+        $found_attachment_url = $url;
+
+        // First, check and see if the given attachment is on a domain
+        // we're watching for files to import.  If its not, then we
+        // can trivially skip it.
+        $is_on_domain = tp2wp_importer_attachments_is_url_on_domains( $url, $domains );
+        if ( ! $is_on_domain ) {
+            $work_performed[$found_attachment_url] = array( false, __( 'Not from a domain being imported from.' ) );
+            continue;
+        }
+
+        // Next, we can also quickly check to see if the given URL looks like
+        // a TypePad popup URL, which doesn't actually point to a new file,
+        // but instead just points to the file with "-popup" attached to the end.
+        // In this case, we don't want to worry about the attachment itself,
+        // we just instead want to always rewrite the link with the -popup
+        // removed (and then fallback on the redirection from the /.a/ version
+        // of the attachment (using the old typepad pattern) to the wordpress
+        // location.
+        if ( tp2wp_importer_attachments_is_popup_url( $url ) ) {
+            $url = substr( $url, 0, strlen( $url ) - 6 );
+        }
+
+        // Next, check and see if the extracted attachment looks like a file
         // that should be imported at all.  If its not, we can store that
         // result and continue on to the next item quickly.
-        $rs = tp2wp_importer_attachments_should_import_attachment( $url, $domains );
+        $rs = tp2wp_importer_attachments_should_import_attachment( $url );
         list( $should_be_imported, $error ) = $rs;
 
         if ( ! $should_be_imported ) {
-            $work_performed[$url] = $rs;
+            $work_performed[$found_attachment_url] = $rs;
             continue;
         }
 
@@ -102,7 +129,7 @@ function tp2wp_importer_attachments_import_for_post ($post_id) {
         $fetched_rs = tp2wp_importer_attachments_import_attachment( $url, $post_ts, $domains );
         list( $fetched_succeded, $fetched_details ) = $fetched_rs;
         if ( ! $fetched_succeded ) {
-            $work_performed[$url] = $fetched_rs;
+            $work_performed[$found_attachment_url] = $fetched_rs;
             continue;
         }
         list ( $local_path, $local_url ) = $fetched_details;
@@ -147,7 +174,7 @@ function tp2wp_importer_attachments_import_for_post ($post_id) {
         // At this point we have successfully fetched this attachment.
         // Note that we haven't yet changed the text of the post, which we'll
         // do after we've finished importing all of the attachments.
-        $work_performed[$url] = array( true, $local_url );
+        $work_performed[$found_attachment_url] = array( true, $local_url );
     }
 
     // Now that we've fetched all the attachments that we can, we need to
@@ -209,14 +236,10 @@ function tp2wp_importer_attachments_extract_attachments ($text) {
 
                     // Make sure we don't loop in base64 embedded images
                     if ( strpos( $match['img_asset'], 'data:image' ) === 0) {
-
                         continue;
-
-                    } else {
-
-                        $asset_url = $match['img_asset'];
-
                     }
+
+                    $asset_url = $match['img_asset'];
 
                 } elseif ( ! empty( $match['tp_img_asset'] ) ) {
 
@@ -286,7 +309,7 @@ function tp2wp_importer_attachments_remote_file_info ($url) {
     curl_setopt( $curl, CURLOPT_FOLLOWLOCATION, true );
     curl_setopt( $curl, CURLOPT_MAXREDIRS, 10 );
     curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
-    curl_setopt( $curl, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt( $curl, CURLOPT_CONNECTTIMEOUT, 5 );
     $header_info = curl_exec( $curl );
     curl_close( $curl );
 
@@ -337,10 +360,6 @@ function tp2wp_importer_attachments_remote_file_info ($url) {
  *
  * @param string $url
  *   An absolute URL to a HTTP hosted file.
- * @param array $domains
- *   An array of domains that should be imported from.  Files served
- *   from hosts not in this list will be ignored.  If this is not provided,
- *   than the domain check is ignored.
  *
  * @return array
  *   Returns a pair of values, the first being a boolean description
@@ -348,7 +367,7 @@ function tp2wp_importer_attachments_remote_file_info ($url) {
  *   a human readable description of why the file should not be imported.
  *   If the first value is true, the second will always be an empty string.
  */
-function tp2wp_importer_attachments_should_import_attachment ($url, $domains = null) {
+function tp2wp_importer_attachments_should_import_attachment ($url) {
 
     $url_parts = parse_url( $url );
 
@@ -356,13 +375,6 @@ function tp2wp_importer_attachments_should_import_attachment ($url, $domains = n
     // any more sense of it, just quick fail it
     if ( ! $url_parts ) {
         return array( false, __( 'Unparsable URL' ) );
-    }
-
-    // Similarly, if the remote file is hosted on a domain other than
-    // one we've been told to import from, ignore it.
-    $domain = strtolower( $url_parts['host'] );
-    if ( $domains && ! in_array( $domain, $domains ) ) {
-        return array( false, __( 'Not from a domain being imported from.' ) );
     }
 
     // Similarly, if we're not able to get any information about the file
@@ -388,6 +400,66 @@ function tp2wp_importer_attachments_should_import_attachment ($url, $domains = n
 }
 
 /**
+ * Returns a boolean description of whether the given URL is hosted on one
+ * of a given array of domains (used to determine whether an attachment
+ * should be imported).
+ *
+ * @param string $url
+ *   An absolute URL to a HTTP hosted file.
+ * @param array $domains
+ *   An array of domains that should be imported from.  Files served
+ *   from hosts not in this list will be ignored.  If this is not provided,
+ *   than the domain check is ignored.
+ *
+ * @return bool
+ *   Returns true if the given url is hosted from one of given domains.
+ */
+function tp2wp_importer_attachments_is_url_on_domains ($url, $domains = null) {
+
+    $url_parts = parse_url( $url );
+
+    // If the URL is unpredictably oddly formatted, don't try to make
+    // any more sense of it, just quick fail it
+    if ( ! $url_parts ) {
+        return false;
+    }
+
+    // Similarly, if the remote file is hosted on a domain other than
+    // one we've been told to import from, ignore it.
+    $domain = strtolower( $url_parts['host'] );
+    if ( $domains && ! in_array( $domain, $domains ) ) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Returns a boolean description of whether the given URL appears to be
+ * a TypePad / MoveableType popup url (ie if it just has '-popup' at the end
+ * of the URL).
+ *
+ * @param string $url
+ *   A valid URL to a HTTP(s) hosted file.
+ *
+ * @return bool
+ *   A boolean description of whether, from the URL, this looks like a popup
+ *   version of an attachment.
+ */
+function tp2wp_importer_attachments_is_popup_url ($url) {
+
+    $popup_index = stripos( $url, '-popup' );
+
+    if ($popup_index === false) {
+        return false;
+    }
+
+    $url_length = strlen( $url );
+    return ( $popup_index === ( $url_length - 6 ) );
+}
+
+
+/**
  * Returns what the local path for an attachment should be, given a specified
  * upload directory.
  *
@@ -409,15 +481,6 @@ function tp2wp_importer_attachments_should_import_attachment ($url, $domains = n
  *   and the second being the url of the newly imported.
  */
 function tp2wp_importer_attachments_import_attachment ($url, $date = null) {
-
-    // First check and see if the given attachment looks like it should be
-    // imported at all.  If not, we can quick return and not need to
-    // process any further.
-    $rs = tp2wp_importer_attachments_should_import_attachment( $url );
-    list( $success, $error ) = $rs;
-    if ( ! $success ) {
-        return $rs;
-    }
 
     $local_filename = tp2wp_importer_attachments_generate_local_filename( $url );
 
